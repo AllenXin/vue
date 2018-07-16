@@ -33,17 +33,21 @@ export function createElement (
   normalizationType: any,
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
+  /*兼容不传data的情况*/
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
     data = undefined
   }
+  /*如果alwaysNormalize为true，则normalizationType标记为ALWAYS_NORMALIZE*/
   if (isTrue(alwaysNormalize)) {
     normalizationType = ALWAYS_NORMALIZE
   }
+  /*创建虚拟节点*/
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+/*创建VNode节点*/
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -51,6 +55,11 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+  /*
+    如果data未定义（undefined或者null）或者是data的__ob__已经定义（代表已经被observed，上面绑定了Oberver对象），
+    https://cn.vuejs.org/v2/guide/render-function.html#约束
+    那么创建一个空节点
+  */
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
