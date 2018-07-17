@@ -45,6 +45,7 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+/*初始化props、methods、data、computed与watch*/
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
@@ -53,6 +54,7 @@ export function initState (vm: Component) {
   if (opts.data) {
     initData(vm)
   } else {
+    /*该组件没有data的时候绑定一个空对象*/
     observe(vm._data = {}, true /* asRootData */)
   }
   if (opts.computed) initComputed(vm, opts.computed)
@@ -66,17 +68,23 @@ function initProps (vm: Component, propsOptions: Object) {
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
+  /*缓存属性的key，使得将来能直接使用数组的索引值来更新props来替代动态地枚举对象*/
   const keys = vm.$options._propKeys = []
+  /*根据$parent是否存在来判断当前是否是根结点*/
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
     toggleObserving(false)
   }
   for (const key in propsOptions) {
+    /*props的key值存入keys（_propKeys）中*/
     keys.push(key)
+    /*验证prop,不存在用默认值替换，类型为bool则声称true或false，
+    当使用default中的默认值的时候会将默认值的副本进行observe*/
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
+      /*判断是否是保留字段，如果是则发出warning*/
       const hyphenatedKey = hyphenate(key)
       if (isReservedAttribute(hyphenatedKey) ||
           config.isReservedAttr(hyphenatedKey)) {
@@ -86,6 +94,10 @@ function initProps (vm: Component, propsOptions: Object) {
         )
       }
       defineReactive(props, key, value, () => {
+        /*
+          由于父组件重新渲染的时候会重写prop的值，所以应该直接使用prop来作为一个data或者计算属性的依赖
+          https://cn.vuejs.org/v2/guide/components.html#字面量语法-vs-动态语法
+        */
         if (vm.$parent && !isUpdatingChildComponent) {
           warn(
             `Avoid mutating a prop directly since the value will be ` +
@@ -102,6 +114,7 @@ function initProps (vm: Component, propsOptions: Object) {
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    /*Vue.extend()期间，静态prop已经在组件原型上代理了，我们只需要在这里进行代理prop*/
     if (!(key in vm)) {
       proxy(vm, `_props`, key)
     }
@@ -114,6 +127,8 @@ function initData (vm: Component) {
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+
+  /*对对象类型进行严格检查，只有当对象是纯javascript对象的时候返回true*/
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -123,10 +138,13 @@ function initData (vm: Component) {
     )
   }
   // proxy data on instance
+  /*遍历data对象*/
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
+
+  //遍历data中的数据
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -137,6 +155,8 @@ function initData (vm: Component) {
         )
       }
     }
+
+    /*保证data中的key不与props中的key重复，props优先，如果有冲突会产生warning*/
     if (props && hasOwn(props, key)) {
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
@@ -144,6 +164,9 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      /*判断是否是保留字段*/
+
+      /*这里是我们前面讲过的代理，将data上面的属性代理到了vm实例上*/
       proxy(vm, `_data`, key)
     }
   }
