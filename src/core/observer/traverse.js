@@ -27,7 +27,7 @@ function _traverse (val: any, seen: SimpleSet) {
     if (seen.has(depId)) {
       return
     }
-    seen.add(depId)
+    seen.add(depId) // 调用getter
   }
   if (isA) {
     i = val.length

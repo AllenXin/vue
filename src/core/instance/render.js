@@ -22,21 +22,27 @@ export function initRender (vm: Component) {
   const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
   const renderContext = parentVnode && parentVnode.context
   vm.$slots = resolveSlots(options._renderChildren, renderContext)
-  vm.$scopedSlots = emptyObject
+  vm.$scopedSlots = emptyObject // 作用域插槽
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+  // 将 createElement 方法绑定到这个实例，这样我们就可以在其中得到适当的 render context。
+  // 编译时创建VNode的方法
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
+  // 规范化一直应用于公共版本，用于用户编写的 render 函数。
+  // 手写render函数的时候创建VNode的方法
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
   // they need to be reactive so that HOCs using them are always updated
+  // 父级组件数据
   const parentData = parentVnode && parentVnode.data
 
   /* istanbul ignore else */
+  // 监听事件
   if (process.env.NODE_ENV !== 'production') {
     defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
       !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
