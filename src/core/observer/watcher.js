@@ -56,6 +56,7 @@ export default class Watcher {
     /*_watchers存放订阅者实例*/
     vm._watchers.push(this)
     // options
+    // watch 四种类型 deep user computed sync
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user

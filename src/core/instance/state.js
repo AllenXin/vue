@@ -197,7 +197,12 @@ function initComputed (vm: Component, computed: Object) {
 
   for (const key in computed) {
     const userDef = computed[key]
+    /*
+      计算属性可能是一个function，也有可能设置了get以及set的对象。
+      可以参考 https://cn.vuejs.org/v2/guide/computed.html#计算-setter
+    */
     const getter = typeof userDef === 'function' ? userDef : userDef.get
+    /*getter不存在的时候抛出warning并且给getter赋空函数*/
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
         `Getter is missing for computed property "${key}".`,
@@ -207,6 +212,10 @@ function initComputed (vm: Component, computed: Object) {
 
     if (!isSSR) {
       // create internal watcher for the computed property.
+      /*
+      为计算属性创建一个内部的监视器Watcher，保存在vm实例的_computedWatchers中
+      这里的computedWatcherOptions参数传递了一个lazy为true，会使得watch实例的dirty为true
+    */
       watchers[key] = new Watcher(
         vm,
         getter || noop,
@@ -218,9 +227,12 @@ function initComputed (vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    /*组件正在定义的计算属性已经定义在现有组件的原型上则不会进行重复定义*/
     if (!(key in vm)) {
+      /*定义计算属性*/
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
+      /*如果计算属性与已定义的data或者props中的名称冲突则发出warning*/
       if (key in vm.$data) {
         warn(`The computed property "${key}" is already defined in data.`, vm)
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -237,16 +249,25 @@ export function defineComputed (
 ) {
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
+    /*创建计算属性的getter*/
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
       : userDef
+    /*
+      当userDef是一个function的时候是不需要setter的，所以这边给它设置成了空函数。
+      因为计算属性默认是一个function，只设置getter。
+      当需要设置setter的时候，会将计算属性设置成一个对象。参考：https://cn.vuejs.org/v2/guide/computed.html#计算-setter
+    */
     sharedPropertyDefinition.set = noop
   } else {
+    /*get不存在则直接给空函数，如果存在则查看是否有缓存cache，
+    没有依旧赋值get，有的话使用createComputedGetter创建*/
     sharedPropertyDefinition.get = userDef.get
       ? shouldCache && userDef.cache !== false
         ? createComputedGetter(key)
         : userDef.get
       : noop
+    /*如果有设置set方法则直接使用，否则赋值空函数*/
     sharedPropertyDefinition.set = userDef.set
       ? userDef.set
       : noop
@@ -260,9 +281,11 @@ export function defineComputed (
       )
     }
   }
+  /*defineProperty上getter与setter*/
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+/*创建计算属性的getter*/
 function createComputedGetter (key) {
   return function computedGetter () {
     const watcher = this._computedWatchers && this._computedWatchers[key]
@@ -304,6 +327,7 @@ function initMethods (vm: Component, methods: Object) {
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
+    /*数组则遍历进行createWatcher*/
     if (Array.isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
         createWatcher(vm, key, handler[i])
@@ -314,19 +338,34 @@ function initWatch (vm: Component, watch: Object) {
   }
 }
 
+/*创建一个观察者Watcher*/
 function createWatcher (
   vm: Component,
   expOrFn: string | Function,
   handler: any,
   options?: Object
 ) {
+  /*对对象类型进行严格检查，只有当对象是纯javascript对象的时候返回true*/
   if (isPlainObject(handler)) {
+    /*
+     这里是当watch的写法是这样的时候
+     watch: {
+         test: {
+             handler: function () {},
+             deep: true
+         }
+     }
+   */
     options = handler
     handler = handler.handler
   }
   if (typeof handler === 'string') {
+    /*
+       当然，也可以直接使用vm中methods的方法
+   */
     handler = vm[handler]
   }
+  /*用$watch方法创建一个watch来观察该对象的变化*/
   return vm.$watch(expOrFn, handler, options)
 }
 
@@ -353,9 +392,24 @@ export function stateMixin (Vue: Class<Component>) {
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 
+  /*
+    https://cn.vuejs.org/v2/api/#vm-set
+    用以将data之外的对象绑定成响应式的
+  */
   Vue.prototype.$set = set
+
+  /*
+   https://cn.vuejs.org/v2/api/#vm-delete
+   与set对立，解除绑定
+ */
   Vue.prototype.$delete = del
 
+
+  /*
+    https://cn.vuejs.org/v2/api/#vm-watch
+    $watch方法
+    用以为对象建立观察者监视变化
+  */
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,
@@ -368,10 +422,13 @@ export function stateMixin (Vue: Class<Component>) {
     options = options || {}
     options.user = true
     const watcher = new Watcher(vm, expOrFn, cb, options)
+    /*有immediate参数的时候会立即执行*/
     if (options.immediate) {
       cb.call(vm, watcher.value)
     }
+    /*返回一个取消观察函数，用来停止触发回调*/
     return function unwatchFn () {
+      /*将自身从所有依赖收集订阅列表删除*/
       watcher.teardown()
     }
   }
