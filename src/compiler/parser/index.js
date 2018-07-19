@@ -510,33 +510,50 @@ function processComponent (el) {
   }
 }
 
+/*处理属性*/
 function processAttrs (el) {
+  /*获取元素属性列表*/
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, isProp
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
+    /*匹配v-、@以及:，处理ele的特殊属性*/
     if (dirRE.test(name)) {
+      /*标记该ele为动态的*/
       // mark element as dynamic
       el.hasBindings = true
       // modifiers
+      /*解析表达式，比如a.b.c.d得到结果{b: true, c: true, d:true}*/
       modifiers = parseModifiers(name)
       if (modifiers) {
+        /*得到第一级，比如a.b.c.d得到a，也就是上面的操作把所有子级取出来，这个把第一级取出来*/
         name = name.replace(modifierRE, '')
       }
+      /*如果属性是v-bind的*/
       if (bindRE.test(name)) { // v-bind
+        /*这样处理以后v-bind:aaa得到aaa*/
         name = name.replace(bindRE, '')
+        /*解析过滤器*/
         value = parseFilters(value)
         isProp = false
         if (modifiers) {
+          /*
+              https://cn.vuejs.org/v2/api/#v-bind
+              这里用来处理v-bind的修饰符
+          */
+          /*.prop - 被用于绑定 DOM 属性。*/
           if (modifiers.prop) {
             isProp = true
+            /*将原本用-连接的字符串变成驼峰 aaa-bbb-ccc => aaaBbbCcc*/
             name = camelize(name)
             if (name === 'innerHtml') name = 'innerHTML'
           }
+          /*.camel - (2.1.0+) 将 kebab-case 特性名转换为 camelCase. (从 2.1.0 开始支持)*/
           if (modifiers.camel) {
             name = camelize(name)
           }
+          //.sync (2.3.0+) 语法糖，会扩展成一个更新父组件绑定值的 v-on 侦听器。
           if (modifiers.sync) {
             addHandler(
               el,
@@ -548,21 +565,27 @@ function processAttrs (el) {
         if (isProp || (
           !el.component && platformMustUseProp(el.tag, el.attrsMap.type, name)
         )) {
+          /*将属性放入ele的props属性中*/
           addProp(el, name, value)
         } else {
+          /*将属性放入ele的attr属性中*/
           addAttr(el, name, value)
         }
       } else if (onRE.test(name)) { // v-on
+        /*处理v-on以及bind*/
         name = name.replace(onRE, '')
         addHandler(el, name, value, modifiers, false, warn)
       } else { // normal directives
+        /*去除@、:、v-*/
         name = name.replace(dirRE, '')
         // parse arg
         const argMatch = name.match(argRE)
+        /*比如:fun="functionA"解析出fun="functionA"*/
         const arg = argMatch && argMatch[1]
         if (arg) {
           name = name.slice(0, -(arg.length + 1))
         }
+        /*将参数加入到ele的directives中去*/
         addDirective(el, name, rawName, value, arg, modifiers)
         if (process.env.NODE_ENV !== 'production' && name === 'model') {
           checkForAliasModel(el, value)
@@ -570,9 +593,14 @@ function processAttrs (el) {
       }
     } else {
       // literal attribute
+      /*处理常规的字符串属性*/
       if (process.env.NODE_ENV !== 'production') {
         const res = parseText(value, delimiters)
         if (res) {
+          /*
+            插入属性内部会被删除，请改用冒号或者v-bind
+            比如应该用<div :id="test">来代替<div id="{{test}}">
+          */
           warn(
             `${name}="${value}": ` +
             'Interpolation inside attributes has been removed. ' +
@@ -587,12 +615,14 @@ function processAttrs (el) {
       if (!el.component &&
           name === 'muted' &&
           platformMustUseProp(el.tag, el.attrsMap.type, name)) {
+        /*将属性放入ele的attr属性中*/
         addProp(el, name, 'true')
       }
     }
   }
 }
 
+/*检测该元素是否存在一个for循环中，将会沿着parent元素一级一级向上便利寻找是否处于一个for循环中。*/
 function checkInFor (el: ASTElement): boolean {
   let parent = el
   while (parent) {
@@ -604,7 +634,9 @@ function checkInFor (el: ASTElement): boolean {
   return false
 }
 
+/*解析表达式，比如a.b.c.d得到结果{b: true, c: true, d:true}*/
 function parseModifiers (name: string): Object | void {
+  /*根据点来分开各个级别的正则，比如a.b.c.d解析后可以得到.b .c .d*/
   const match = name.match(modifierRE)
   if (match) {
     const ret = {}
@@ -632,6 +664,7 @@ function isTextTag (el): boolean {
   return el.tag === 'script' || el.tag === 'style'
 }
 
+/*判断是否是被禁止的标签（style标签或者script标签）*/
 function isForbiddenTag (el): boolean {
   return (
     el.tag === 'style' ||

@@ -42,6 +42,11 @@ export function createFnInvoker (fns: Function | Array<Function>): Function {
   return invoker
 }
 
+
+/*
+* 遍历 on 去添加事件监听，遍历 oldOn 去移除事件监听，
+* 关于监听和移除事件的方法都是外部传入的，
+* 因为它既处理原生 DOM 事件的添加删除，也处理自定义事件的添加删除。*/
 export function updateListeners (
   on: Object,
   oldOn: Object,
@@ -53,7 +58,7 @@ export function updateListeners (
   for (name in on) {
     def = cur = on[name]
     old = oldOn[name]
-    event = normalizeEvent(name)
+    event = normalizeEvent(name) // 区分出这个事件是否有 once、capture、passive 等修饰符
     /* istanbul ignore if */
     if (__WEEX__ && isPlainObject(def)) {
       cur = def.handler

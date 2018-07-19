@@ -25,6 +25,9 @@ export function initLifecycle (vm: Component) {
   const options = vm.$options
 
   // locate first non-abstract parent
+  /*
+  * vm.$parent 就是用来保留当前 vm 的父实例，
+  * 并且通过 parent.$children.push(vm) 来把当前的 vm 存储到父实例的 $children 中。*/
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -53,7 +56,9 @@ export function lifecycleMixin (Vue: Class<Component>) {
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const prevActiveInstance = activeInstance
-    activeInstance = vm
+    activeInstance = vm // activeInstance 作用就是保持当前上下文的 Vue 实例
+
+    // vm._vnode 和 vm.$vnode 的关系就是一种父子关系，用代码表达就是 vm._vnode.parent === vm.$vnode
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
