@@ -45,7 +45,7 @@ export function createFnInvoker (fns: Function | Array<Function>): Function {
 
 /*
 * 遍历 on 去添加事件监听，遍历 oldOn 去移除事件监听，
-* 关于监听和移除事件的方法都是外部传入的，
+* 关于监听和移除事件的方法都是外部传入   的，
 * 因为它既处理原生 DOM 事件的添加删除，也处理自定义事件的添加删除。*/
 export function updateListeners (
   on: Object,
