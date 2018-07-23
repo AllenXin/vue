@@ -110,6 +110,7 @@ export function createComponent (
     return
   }
 
+  // Vue.options._base = Vue
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
@@ -127,6 +128,8 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件
+  // https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%BC%82%E6%AD%A5%E7%BB%84%E4%BB%B6
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -149,17 +152,23 @@ export function createComponent (
 
   // resolve constructor options in case global mixins are applied after
   // component constructor creation
+  // 解析constructor上的options属性的
+  // https://segmentfault.com/a/1190000014587126
   resolveConstructorOptions(Ctor)
 
   // transform component v-model data into props & events
+  // https://cn.vuejs.org/v2/api/#model
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
 
   // extract props
+  // Vue通过调用内部方法hyphenate，把驼峰形式的属性转换为横断线形式
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
+  // https://cn.vuejs.org/v2/api/#functional
+  // 函数式组件 https://cn.vuejs.org/v2/guide/render-function.html#函数式组件
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
@@ -187,6 +196,7 @@ export function createComponent (
   installComponentHooks(data)
 
   // return a placeholder vnode
+  // 实例化 VNode
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -212,7 +222,7 @@ export function createComponentInstanceForVnode (
 ): Component {
   const options: InternalComponentOptions = {
     _isComponent: true,
-    _parentVnode: vnode,
+    _parentVnode: vnode, // 当前组件的父 VNode
     parent
   }
   // check inline-template render functions

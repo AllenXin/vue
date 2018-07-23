@@ -42,6 +42,7 @@ export function parentNode (node: Node): ?Node {
   return node.parentNode
 }
 
+// 返回下一个同胞
 export function nextSibling (node: Node): ?Node {
   return node.nextSibling
 }

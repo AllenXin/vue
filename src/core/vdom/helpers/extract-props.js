@@ -9,6 +9,7 @@ import {
   formatComponentName
 } from 'core/util/index'
 
+// Vue通过调用内部方法hyphenate，把驼峰形式的属性转换为横断线形式
 export function extractPropsFromVNodeData (
   data: VNodeData,
   Ctor: Class<Component>,

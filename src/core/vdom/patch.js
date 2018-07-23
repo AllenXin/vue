@@ -231,6 +231,7 @@ export function createPatchFunction (backend) {
   }
 
   /*创建一个组件*/
+  // 尝试创建子组件
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data // init 钩子函数
     if (isDef(i)) {
@@ -563,6 +564,10 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // oldVnode 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象；
+  // vnode 表示执行 _render 后返回的 VNode 的节点；
+  // hydrating 表示是否是服务端渲染；
+  // removeOnly 是给 transition-group 用的
   function patchVnode (oldVnode, vnode, insertedVnodeQueue, removeOnly) {
     if (oldVnode === vnode) {
       return
@@ -782,7 +787,7 @@ export function createPatchFunction (backend) {
       // empty mount (likely as component), create new root element
       /*oldVnode未定义的时候，其实也就是root节点，创建一个新的节点*/
       isInitialPatch = true
-      createElm(vnode, insertedVnodeQueue)
+      createElm(vnode, insertedVnodeQueue) //
     } else {
       /*标记旧的VNode是否有nodeType*/
       const isRealElement = isDef(oldVnode.nodeType)

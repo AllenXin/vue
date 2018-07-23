@@ -29,6 +29,7 @@ export function initRender (vm: Component) {
   // internal version is used by render functions compiled from templates
   // 将 createElement 方法绑定到这个实例，这样我们就可以在其中得到适当的 render context。
   // 编译时创建VNode的方法
+  // 它是被模板编译成的 render 函数使用
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
@@ -64,6 +65,7 @@ export function renderMixin (Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
+  /*_render渲染函数，返回一个VNode节点*/
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options
@@ -86,6 +88,7 @@ export function renderMixin (Vue: Class<Component>) {
     // render self
     let vnode
     try {
+      /*调用render函数，返回一个VNode节点*/
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
